@@ -68,7 +68,7 @@ import com.hayaisoftware.launcher.ShortcutNotificationManager;
 import com.hayaisoftware.launcher.StatusBarColorHelper;
 import com.hayaisoftware.launcher.Trie;
 import com.hayaisoftware.launcher.comparators.AlphabeticalOrder;
-import com.hayaisoftware.launcher.comparators.PinToTop;
+import com.hayaisoftware.launcher.comparators.PriorityOrder;
 import com.hayaisoftware.launcher.comparators.RecentOrder;
 import com.hayaisoftware.launcher.comparators.UsageOrder;
 import com.hayaisoftware.launcher.threading.SimpleTaskConsumerManager;
@@ -112,7 +112,7 @@ public class SearchActivity extends Activity
     private int mNumOfCores;
     private BroadcastReceiver mPackageChangedReceiver;
 
-    private Comparator<LaunchableActivity> mPinToTopComparator;
+    private Comparator<LaunchableActivity> mPriorityComparator;
     private Comparator<LaunchableActivity> mRecentOrderComparator;
     private Comparator<LaunchableActivity> mAlphabeticalOrderComparator;
     private Comparator<LaunchableActivity> mUsageOrderComparator;
@@ -210,7 +210,7 @@ public class SearchActivity extends Activity
         mIconSizePixels = resources.getDimensionPixelSize(R.dimen.app_icon_size);
 
 
-        mPinToTopComparator = new PinToTop();
+        mPriorityComparator = new PriorityOrder();
         mRecentOrderComparator = new RecentOrder();
         mAlphabeticalOrderComparator = new AlphabeticalOrder();
         mUsageOrderComparator = new UsageOrder();
@@ -504,7 +504,7 @@ public class SearchActivity extends Activity
             Collections.sort(mActivityInfos, mUsageOrderComparator);
         }
 
-        Collections.sort(mActivityInfos, mPinToTopComparator);
+        Collections.sort(mActivityInfos, mPriorityComparator);
     }
 
     private void removeActivitiesFromPackage(String packageName) {
@@ -772,16 +772,23 @@ public class SearchActivity extends Activity
                 startActivity(intentPlayStore);
                 return true;
             case R.id.appmenu_pin_to_top:
-                launchableActivity.setPriority(launchableActivity.getPriority() == 0 ? 1 : 0);
-                mLaunchableActivityPrefs.writePreference(launchableActivity.getClassName(),
-                        launchableActivity.getLaunchTime(), launchableActivity.getPriority(), launchableActivity.getusagesQuantity());
-                sortApps();
-                mArrayAdapter.notifyDataSetChanged();
+                updatePriority(launchableActivity, 1);
+                return true;
+            case R.id.appmenu_pin_to_bottom:
+                updatePriority(launchableActivity, -1);
                 return true;
             default:
                 return false;
         }
 
+    }
+
+    private void updatePriority(LaunchableActivity launchableActivity, int priority) {
+        launchableActivity.setPriority(launchableActivity.getPriority() != priority ? priority : 0);
+        mLaunchableActivityPrefs.writePreference(launchableActivity.getClassName(),
+                launchableActivity.getLaunchTime(), launchableActivity.getPriority(), launchableActivity.getusagesQuantity());
+        sortApps();
+        mArrayAdapter.notifyDataSetChanged();
     }
 
     public void onClickSettingsButton(View view) {
@@ -864,6 +871,7 @@ public class SearchActivity extends Activity
                 final ImageView appIconView = (ImageView) view.findViewById(R.id.appIcon);
                 final View appShareIndicator = view.findViewById(R.id.appShareIndicator);
                 final View appPinToTop = view.findViewById(R.id.appPinToTop);
+                final View appPinToBottom = view.findViewById(R.id.appPinToBottom);
 
                 appLabelView.setText(label);
 
@@ -882,6 +890,8 @@ public class SearchActivity extends Activity
                         launchableActivity.isShareable() ? View.VISIBLE : View.GONE);
                 appPinToTop.setVisibility(
                         launchableActivity.getPriority() > 0 ? View.VISIBLE : View.GONE);
+                appPinToBottom.setVisibility(
+                        launchableActivity.getPriority() < 0 ? View.VISIBLE : View.GONE);
 
             }
             return view;

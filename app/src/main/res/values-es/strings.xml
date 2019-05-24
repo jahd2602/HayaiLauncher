@@ -33,4 +33,5 @@
     <string name="pref_preferred_order_dialog">Ordenar aplicaciones</string>
     <string name="settings_disable_icon_loading">Desactivar carga de íconos</string>
     <string name="settings_enable_icons_title">Mostrar íconos</string>
+    <string name="appmenu_pin_to_bottom">Anclar al final</string>
 </resources>
